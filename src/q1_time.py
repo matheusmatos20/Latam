@@ -1,72 +1,43 @@
-from typing import List, Tuple
+import pandas as pd
 from datetime import datetime
-import json
-from collections import defaultdict
+from typing import List, Tuple
 
-def retorna_jsons(filepath):
-    Array_jsons=[]    
+# Neste ejercicio, el principal problema se deu por causa de la coluna user.username y la dificuldad de pandas en leer ninhos.
+# Para esto, se fué necessario una normalizacion.
+
+def q1_memory(file_path: str) -> List[Tuple[datetime.date, str]]:
     try:
-         
-        with open(filepath, 'r', encoding='utf-8') as file:
-                for line in file:
-                    json_data = json.loads(line.strip())  # Usando .strip() para remover las quebras de lineas extras
-                    Array_jsons.append(json_data) #salvando json en array
+        # # LECTURA DE JSON PARA DATAFRAME
+        df = pd.read_json(file_path, lines=True, encoding='utf-8')
 
-    except json.JSONDecodeError as e:
-        print   (f"Erro ao decodificar JSON na linha: {line}. Erro: {e}")
-    return Array_jsons
+        # # NORMALIZACION DA COLUNA USER.USERNAME PARA UNA NUEVA COLUNA
+        df = pd.json_normalize(df.to_dict(orient='records'))
 
-def q1_time(file_path: str) -> List[Tuple[datetime.date, str]]:
-    #El Json és un arquivo con vários Jsons y no una lista de Jsons, por esto necessitaremos crear una lista para realizar la lectura.
+        # CONVERSION DE CAMPO DATA PARA AYUDAR EN AGRUPAMIENTO
+        df['date'] = pd.to_datetime(df['date'])
 
-    #resultado a ser exportado
-    resultados: List[Tuple[datetime.date, str]] = []
-    #receberá la lista de jsons
-    jsons = []
+        # CREANDO UNA NUEVA COLUNA 'date_str' coN formato YYYY-MM-DD
+        df['date_str'] = df['date'].dt.strftime('%Y-%m-%d')
+
+        # AGRUPANDO POR FECHA Y USUARIO, CONTANDO EL NUMERO DE TWEETS POR USUARIO EN CADA FECHA
+        grouped = df.groupby(['date_str', 'user.username']).size().reset_index(name='tweet_count')
+
+        # Para cada data, encontra o usuário com o maior número de tweets
+        top_user_p_day = grouped.loc[grouped.groupby('date_str')['tweet_count'].idxmax()]
+
+        # Formata os resultados em uma lista de tuplas (data, usuário)
+        resultados = [(row['date_str'], row['user.username']) for _, row in top_user_p_day.iterrows()]
+
+        return resultados
     
-    agrupamento = defaultdict(int)
-    agrupamento_datas_usuarios = defaultdict(lambda: defaultdict(int))  # Agrupar por fecha y usuários
-
-    #1. Las top 10 fechas donde hay más tweets. Mencionar el usuario (username) que más publicaciones tiene por cada uno de esos días. Debe incluir las siguientes funciones:```python   
-    try:
-        #Realizando abertura de lo arquivo
-        jsons = retorna_jsons(file_path)
-       
-        for item in jsons:
-            data_str = item['date']
-            user = item['user']['username']  # Nombre de usuário
-            data_obj = datetime.fromisoformat(data_str)  
-            #Formata la Fecha para yyyy-mm-dd para poder realizar el agrupamento por fecha
-            data_formatada = data_obj.strftime('%Y-%m-%d')  
-            #Realiza la contage de usuários por fecha
-            agrupamento_datas_usuarios[data_formatada][user] += 1
-            #conta el numeros de itens para cada fecha
-            agrupamento[data_formatada] += 1  
-
-        # top_10_datas = sorted(agrupamento.items(), key=lambda x: x[1], reverse=True)[:10]
-
-        # print(top_10_datas)
-
-        for data, usuarios in agrupamento_datas_usuarios.items():
-            # print(f"Data: {data},{usuario}")
-            # Ordena los usuários pela cuantida de publicaciones
-            usuarios_ordenados = sorted(usuarios.items(), key=lambda x: x[1], reverse=True)
-            if usuarios_ordenados:
-                top_usuario, top_count = usuarios_ordenados[0]
-            data_obj = datetime.strptime(data, '%Y-%m-%d').date()
-            resultados.append((data, top_usuario))
-            # print(f"Data: {data}, Usuário: {top_usuario}, Postagens: {top_count}")
-        return resultados       
-
-    except KeyError:
-            print("Erro: Campo 'date' ou 'Usuario' não encontrado no item.")
     except ValueError as e:
-            print(f"Erro ao converter data: {e}")
-    
+        print(f"Erro ao converter data: {e}")
+    except Exception as e:
+        print(f"Erro inesperado: {e}")
 
 ##-------------------------------------TESTE ----------------------------------##
 # file_path = "C:\\Users\\mathe\\Documents\\Desafio Latam\\farmers-protest-tweets-2021-2-4.json"
-# data = q1_time(file_path)
+# data = q1_memory(file_path)
 # print(data)
 
 

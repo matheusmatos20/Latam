@@ -5,7 +5,22 @@ from collections import Counter
 import emoji
 from typing import List, Tuple
 
+def q2_time(file_path: str) -> List[Tuple[str, int]]:
+    resultado =[]
+    emoji_counts = contar_emojis(retorna_jsons(file_path))
 
+    # Top 10 emojis mais frequentes
+    top_10_emojis = emoji_counts.most_common(10)
+
+    # Exibir os resultados
+    # print("Top 10 emojis mais frequentes:")
+    for emoji_char, count in top_10_emojis:
+        resultado.append((emoji_char, count))
+        # print(f"{emoji_char}: {count}")
+    return resultado
+        # print(f"{emoji_char}: {count}")
+#Los top 10 emojis más usados con su respectivo conteo. Debe incluir las siguientes funciones:
+    
 def retorna_jsons(filepath):
     Array_jsons=[]    
     with open(filepath, 'r', encoding='utf-8') as file:
@@ -29,5 +44,8 @@ def contar_emojis(jsons):
          
     return emoji_counter #list(emoji_counter.items())
 
-def q2_time(file_path: str) -> List[Tuple[str, int]]:
-    pass
+# file_path = "C:\\Users\\mathe\\Documents\\Desafio Latam\\farmers-protest-tweets-2021-2-4.json"
+# Contar os emojis nos tweets
+
+# data = q2_time(file_path)
+# print(data)

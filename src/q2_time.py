@@ -15,5 +15,19 @@ def retorna_jsons(filepath):
     return Array_jsons
 
 
+def contar_emojis(jsons):
+    emoji_counter = Counter()
+
+    for tweet in jsons:
+        content = tweet.get("content", "")
+        
+        # Extrai todos os emojis do conteúdo
+        emojis = [char for char in content if emoji.is_emoji(char)]
+        
+        # Conta a ocorrência de cada emoji
+        emoji_counter.update(emojis)
+         
+    return emoji_counter #list(emoji_counter.items())
+
 def q2_time(file_path: str) -> List[Tuple[str, int]]:
     pass

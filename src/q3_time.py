@@ -1,52 +1,30 @@
-from typing import List, Tuple
-import json
-from collections import Counter
+import pandas as pd
 import re
+from collections import Counter
 from typing import List, Tuple
 
-def q3_time(file_path: str) -> List[Tuple[str, int]]:
-    resultado =[]
-    mention_count = contar_mencoes(retorna_jsons(file_path))
+def q3_memory(file_path: str) -> List[Tuple[str, int]]:
+    #LE ARQUIVO JSON E COLOCA EN DATAFRAME
+    df = pd.read_json(file_path, lines=True, encoding='utf-8')
 
-    # Top 10 emojis mais frequentes
-    top_10_users = mention_count.most_common(10)
+    # EXPRESIÓN REGULAR PARA IDENTIFICAR MENTION
+    pattern = r'@([A-Za-z0-9_]+)'
 
-    # Exibir os resultados
-    # print("Top 10 emojis mais frequentes:")
-    for mention, count in top_10_users:
-        resultado.append((mention, count))
-        # print(f"{emoji_char}: {count}")
-    return resultado
-        # print(f"{emoji_char}: {count}")
-#Los top 10 emojis más usados con su respectivo conteo. Debe incluir las siguientes funciones:
-    
-def retorna_jsons(filepath):
-    Array_jsons=[]    
-    with open(filepath, 'r', encoding='utf-8') as file:
-            for line in file:
-                json_data = json.loads(line.strip())  # Usando .strip() para remover las quebras de lineas extras
-                Array_jsons.append(json_data) #salvando json en array
-    return Array_jsons
+    # APLICA REGEX PARA EXTRAIR MENTIONS
+    df['mentions'] = df['content'].apply(lambda x: re.findall(pattern, x))
 
+    # COMPRIMI A LISTA
+    all_mentions = [mention for sublist in df['mentions'] for mention in sublist]
 
-def contar_mencoes(jsons):
-    mention_counter = Counter()
+    # CRIA COUNTER PARA MENTIONS
+    mention_counter = Counter(all_mentions)
 
-    for tweet in jsons:
-        content = tweet.get("content", "")
+    # TOP 10 USERS
+    top_10_users = mention_counter.most_common(10)
 
-        # Expressão regular para capturar menções de usuários (@username)
-        pattern = r'@([A-Za-z0-9_]+)'
+    return top_10_users
 
-        # Encontrar todas as menções no conteúdo
-        mentions = re.findall(pattern, content)
-        # Conta a ocorrência de cada emoji
-        mention_counter.update(mentions)
-         
-    return mention_counter #list(emoji_counter.items())
-
+# LLAMADA DE METODO:
 # file_path = "C:\\Users\\mathe\\Documents\\Desafio Latam\\farmers-protest-tweets-2021-2-4.json"
-# # Contar os emojis nos tweets
-
-# data = q3_time(file_path)
-# print(data)
+# resultado = q3_memory(file_path)
+# print(resultado)
